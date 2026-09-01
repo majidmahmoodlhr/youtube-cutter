@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>YouTube Video Cutter</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <header>
+
+        <h1>🎬 YouTube Video Cutter</h1>
+
+        <p>
+            Enter a YouTube URL and select
+            the part you want to download.
+        </p>
+
+    </header>
+
+
+    <main class="card">
+
+
+        <!-- =========================================
+             YOUTUBE URL
+        ========================================== -->
+
+        <label for="youtubeUrl">
+            YouTube Video URL
+        </label>
+
+
+        <div class="url-row">
+
+            <input
+                type="url"
+                id="youtubeUrl"
+                placeholder="Paste YouTube URL here..."
+            >
+
+
+            <button
+                id="fetchButton"
+                class="fetch-button"
+            >
+                🔍 Fetch
+            </button>
+
+        </div>
+
+
+        <!-- =========================================
+             FETCH STATUS
+        ========================================== -->
+
+        <div
+            id="statusBox"
+            class="status-box"
+            style="display:none;"
+        >
+
+            <div
+                id="spinner"
+                class="spinner"
+                style="display:none;"
+            ></div>
+
+
+            <div>
+
+                <strong id="statusText">
+                    Ready
+                </strong>
+
+
+                <div
+                    id="statusTime"
+                    class="status-time"
+                >
+                    00:00
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
+             VIDEO INFORMATION
+        ========================================== -->
+
+        <section
+            id="videoInfo"
+            class="video-info"
+        >
+
+
+            <div class="thumbnail-container">
+
+                <img
+                    id="thumbnail"
+                    alt="Video thumbnail"
+                >
+
+            </div>
+
+
+            <div class="info">
+
+
+                <div class="info-label">
+                    Video Title
+                </div>
+
+
+                <h2 id="videoTitle">
+                    -
+                </h2>
+
+
+                <div class="channel-name">
+
+                    <span>
+                        Channel
+                    </span>
+
+                    <strong id="channelName">
+                        -
+                    </strong>
+
+                </div>
+
+
+                <div class="duration-display">
+
+                    <span>
+                        Total Duration
+                    </span>
+
+                    <strong id="videoDuration">
+                        00:00:00
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================================
+             FORMAT SELECTION
+        ========================================== -->
+
+        <section
+            id="formatSection"
+            class="format-section"
+            style="display:none;"
+        >
+
+            <h2>
+                🎥 Video Format
+            </h2>
+
+
+            <label for="formatSelect">
+                Select the format available for this video
+            </label>
+
+
+            <select
+                id="formatSelect"
+                class="format-select"
+            >
+
+                <option value="">
+                    Select a format
+                </option>
+
+            </select>
+
+
+            <p class="format-help">
+                Only formats actually available for this
+                YouTube video are shown.
+            </p>
+
+        </section>
+
+
+        <!-- =========================================
+             CUT SECTION
+        ========================================== -->
+
+        <section
+            id="cutSection"
+            class="cut-section"
+            style="display:none;"
+        >
+
+
+            <h2>
+                ✂️ Select Your Section
+            </h2>
+
+
+            <div class="time-grid">
+
+
+                <div class="time-box">
+
+                    <label for="startTime">
+                        Start Time
+                    </label>
+
+                    <input
+                        type="text"
+                        id="startTime"
+                        value="00:00:00"
+                        placeholder="HH:MM:SS"
+                    >
+
+                </div>
+
+
+                <div class="time-box">
+
+                    <label for="endTime">
+                        End Time
+                    </label>
+
+                    <input
+                        type="text"
+                        id="endTime"
+                        value="00:00:00"
+                        placeholder="HH:MM:SS"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <p class="help-text">
+                Enter time in HH:MM:SS format.
+                Example: 00:05:30
+            </p>
+
+
+            <button
+                id="cutButton"
+                class="cut-button"
+            >
+                ✂️ Cut & Download
+            </button>
+
+
+            <!-- CUT STATUS -->
+
+            <div
+                id="cutStatus"
+                class="cut-status"
+                style="display:none;"
+            >
+
+                <div
+                    id="cutSpinner"
+                    class="spinner"
+                    style="display:none;"
+                ></div>
+
+
+                <strong id="cutStatusText">
+                    Preparing...
+                </strong>
+
+
+                <div
+                    id="cutElapsed"
+                    class="status-time"
+                >
+                    00:00
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =========================================
+             MESSAGE
+        ========================================== -->
+
+        <div
+            id="message"
+            class="message"
+        ></div>
+
+
+    </main>
+
+
+    <footer id="footer">
+
+        YouTube Video Cutter • Flask + FFmpeg
+
+    </footer>
+
+
+</div>
+
+
+
+<script>
+
+
+// =====================================================
+// ELEMENTS
+// =====================================================
+
+const youtubeUrl =
+    document.getElementById("youtubeUrl");
+
+const fetchButton =
+    document.getElementById("fetchButton");
+
+const statusBox =
+    document.getElementById("statusBox");
+
+const spinner =
+    document.getElementById("spinner");
+
+const statusText =
+    document.getElementById("statusText");
+
+const statusTime =
+    document.getElementById("statusTime");
+
+const videoInfo =
+    document.getElementById("videoInfo");
+
+const thumbnail =
+    document.getElementById("thumbnail");
+
+const videoTitle =
+    document.getElementById("videoTitle");
+
+const channelName =
+    document.getElementById("channelName");
+
+const videoDuration =
+    document.getElementById("videoDuration");
+
+const formatSection =
+    document.getElementById("formatSection");
+
+const formatSelect =
+    document.getElementById("formatSelect");
+
+const cutSection =
+    document.getElementById("cutSection");
+
+const startTime =
+    document.getElementById("startTime");
+
+const endTime =
+    document.getElementById("endTime");
+
+const cutButton =
+    document.getElementById("cutButton");
+
+const cutStatus =
+    document.getElementById("cutStatus");
+
+const cutSpinner =
+    document.getElementById("cutSpinner");
+
+const cutStatusText =
+    document.getElementById("cutStatusText");
+
+const cutElapsed =
+    document.getElementById("cutElapsed");
+
+const message =
+    document.getElementById("message");
+
+const footer =
+    document.getElementById("footer");
+
+
+let videoDurationSeconds = 0;
+
+let fetchTimer = null;
+
+let cutTimer = null;
+
+let fetchStartTime = 0;
+
+let cutStartTime = 0;
+
+
+// =====================================================
+// FORMAT TIME
+// =====================================================
+
+function formatTime(seconds) {
+
+    seconds =
+        Math.max(
+            0,
+            Math.floor(seconds)
+        );
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const secs =
+        seconds % 60;
+
+    return (
+        String(minutes).padStart(2, "0")
+        + ":"
+        + String(secs).padStart(2, "0")
+    );
+}
+
+
+// =====================================================
+// TIME → SECONDS
+// =====================================================
+
+function timeToSeconds(value) {
+
+    const parts =
+        value.trim().split(":");
+
+
+    if (parts.length !== 3) {
+
+        return NaN;
+
+    }
+
+
+    const h =
+        Number(parts[0]);
+
+    const m =
+        Number(parts[1]);
+
+    const s =
+        Number(parts[2]);
+
+
+    if (
+        !Number.isFinite(h) ||
+        !Number.isFinite(m) ||
+        !Number.isFinite(s)
+    ) {
+
+        return NaN;
+
+    }
+
+
+    if (
+        h < 0 ||
+        m < 0 ||
+        m > 59 ||
+        s < 0 ||
+        s > 59
+    ) {
+
+        return NaN;
+
+    }
+
+
+    return (
+        h * 3600 +
+        m * 60 +
+        s
+    );
+}
+
+
+// =====================================================
+// MESSAGE
+// =====================================================
+
+function showMessage(
+    text,
+    type = ""
+) {
+
+    message.textContent =
+        text;
+
+    message.className =
+        "message " + type;
+}
+
+
+// =====================================================
+// FETCH TIMER
+// =====================================================
+
+function startFetchTimer() {
+
+    fetchStartTime =
+        Date.now();
+
+    clearInterval(
+        fetchTimer
+    );
+
+
+    fetchTimer =
+        setInterval(
+            function() {
+
+                const elapsed =
+                    (
+                        Date.now()
+                        -
+                        fetchStartTime
+                    ) / 1000;
+
+
+                statusTime.textContent =
+                    formatTime(
+                        elapsed
+                    );
+
+            },
+            250
+        );
+}
+
+
+function stopFetchTimer() {
+
+    clearInterval(
+        fetchTimer
+    );
+
+}
+
+
+// =====================================================
+// CUT TIMER
+// =====================================================
+
+function startCutTimer() {
+
+    cutStartTime =
+        Date.now();
+
+    clearInterval(
+        cutTimer
+    );
+
+
+    cutTimer =
+        setInterval(
+            function() {
+
+                const elapsed =
+                    (
+                        Date.now()
+                        -
+                        cutStartTime
+                    ) / 1000;
+
+
+                cutElapsed.textContent =
+                    formatTime(
+                        elapsed
+                    );
+
+            },
+            250
+        );
+}
+
+
+function stopCutTimer() {
+
+    clearInterval(
+        cutTimer
+    );
+
+}
+
+
+// =====================================================
+// DISPLAY AVAILABLE FORMATS
+// =====================================================
+
+function displayFormats(formats) {
+
+
+    formatSelect.innerHTML = "";
+
+
+    const defaultOption =
+        document.createElement(
+            "option"
+        );
+
+
+    defaultOption.value = "";
+
+    defaultOption.textContent =
+        "Select a format";
+
+
+    formatSelect.appendChild(
+        defaultOption
+    );
+
+
+    if (
+        !formats ||
+        formats.length === 0
+    ) {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value = "";
+
+        option.textContent =
+            "No suitable video formats found";
+
+        formatSelect.appendChild(
+            option
+        );
+
+        return;
+    }
+
+
+    /*
+       Remove duplicate resolution +
+       extension combinations.
+    */
+
+    const seen =
+        new Set();
+
+
+    formats.forEach(
+        function(format) {
+
+
+            const key =
+                format.height
+                + "-"
+                + format.ext
+                + "-"
+                + format.has_audio;
+
+
+            if (seen.has(key)) {
+
+                return;
+
+            }
+
+
+            seen.add(key);
+
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                format.format_id;
+
+
+            let audioText =
+                format.has_audio
+                ? " + Audio"
+                : " + Audio will be added";
+
+
+            option.textContent =
+                format.height
+                + "p • "
+                + format.ext.toUpperCase()
+                + audioText;
+
+
+            formatSelect.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// FETCH
+// =====================================================
+
+fetchButton.addEventListener(
+    "click",
+    async function() {
+
+
+        const url =
+            youtubeUrl.value.trim();
+
+
+        if (!url) {
+
+            showMessage(
+                "Please enter a YouTube URL.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        videoInfo.style.display =
+            "none";
+
+
+        formatSection.style.display =
+            "none";
+
+
+        cutSection.style.display =
+            "none";
+
+
+        statusBox.style.display =
+            "flex";
+
+
+        spinner.style.display =
+            "block";
+
+
+        statusText.textContent =
+            "🔎 Connecting to YouTube...";
+
+
+        fetchButton.disabled =
+            true;
+
+
+        fetchButton.textContent =
+            "⏳ Fetching...";
+
+
+        showMessage("");
+
+
+        startFetchTimer();
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/fetch",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                url: url
+
+                            })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    "Could not fetch video information."
+                );
+
+            }
+
+
+            // =========================================
+            // VIDEO INFORMATION
+            // =========================================
+
+            videoDurationSeconds =
+                Number(
+                    data.duration
+                );
+
+
+            videoTitle.textContent =
+                data.title ||
+                "Unknown Title";
+
+
+            channelName.textContent =
+                data.channel ||
+                "Unknown Channel";
+
+
+            videoDuration.textContent =
+                data.duration_text;
+
+
+            // =========================================
+            // THUMBNAIL
+            // =========================================
+
+            if (data.thumbnail) {
+
+                thumbnail.src =
+                    data.thumbnail;
+
+                thumbnail.style.display =
+                    "block";
+
+            }
+            else {
+
+                thumbnail.style.display =
+                    "none";
+
+            }
+
+
+            // =========================================
+            // TIME
+            // =========================================
+
+            startTime.value =
+                "00:00:00";
+
+
+            endTime.value =
+                data.duration_text;
+
+
+            // =========================================
+            // FORMATS
+            // =========================================
+
+            displayFormats(
+                data.formats
+            );
+
+
+            // =========================================
+            // SHOW EVERYTHING
+            // =========================================
+
+            videoInfo.style.display =
+                "grid";
+
+
+            formatSection.style.display =
+                "block";
+
+
+            cutSection.style.display =
+                "block";
+
+
+            spinner.style.display =
+                "none";
+
+
+            statusText.textContent =
+                "✅ Video information ready";
+
+
+            showMessage(
+                "Video information and available formats loaded.",
+                "success"
+            );
+
+
+        }
+        catch (error) {
+
+
+            spinner.style.display =
+                "none";
+
+
+            statusText.textContent =
+                "❌ Fetch failed";
+
+
+            showMessage(
+                error.message,
+                "error"
+            );
+
+        }
+        finally {
+
+
+            stopFetchTimer();
+
+
+            fetchButton.disabled =
+                false;
+
+
+            fetchButton.textContent =
+                "🔍 Fetch";
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// CUT & DOWNLOAD
+// =====================================================
+
+cutButton.addEventListener(
+    "click",
+    async function() {
+
+
+        const url =
+            youtubeUrl.value.trim();
+
+
+        const start =
+            timeToSeconds(
+                startTime.value
+            );
+
+
+        const end =
+            timeToSeconds(
+                endTime.value
+            );
+
+
+        const selectedFormat =
+            formatSelect.value;
+
+
+        // =============================================
+        // VALIDATION
+        // =============================================
+
+        if (!selectedFormat) {
+
+            showMessage(
+                "Please select a video format.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            Number.isNaN(start) ||
+            Number.isNaN(end)
+        ) {
+
+            showMessage(
+                "Use HH:MM:SS format.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (end <= start) {
+
+            showMessage(
+                "End time must be greater than start time.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            videoDurationSeconds &&
+            end > videoDurationSeconds
+        ) {
+
+            showMessage(
+                "End time cannot exceed the video duration.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        // =============================================
+        // START PROCESSING
+        // =============================================
+
+        cutButton.disabled =
+            true;
+
+
+        cutButton.textContent =
+            "⏳ Processing...";
+
+
+        cutStatus.style.display =
+            "block";
+
+
+        cutSpinner.style.display =
+            "block";
+
+
+        cutStatusText.textContent =
+            "🔗 Connecting to selected YouTube stream...";
+
+
+        startCutTimer();
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/cut",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                url: url,
+
+                                start_time:
+                                    startTime.value,
+
+                                end_time:
+                                    endTime.value,
+
+                                format_id:
+                                    selectedFormat
+
+                            })
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+
+                let errorMessage =
+                    "Could not create the video.";
+
+
+                try {
+
+                    const data =
+                        await response.json();
+
+
+                    errorMessage =
+                        data.message ||
+                        errorMessage;
+
+                }
+                catch (e) {}
+
+
+                throw new Error(
+                    errorMessage
+                );
+
+            }
+
+
+            cutStatusText.textContent =
+                "📦 Preparing your download...";
+
+
+            const blob =
+                await response.blob();
+
+
+            const downloadUrl =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+
+            link.href =
+                downloadUrl;
+
+
+            link.download =
+                "cut-video.mp4";
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            link.remove();
+
+
+            URL.revokeObjectURL(
+                downloadUrl
+            );
+
+
+            cutSpinner.style.display =
+                "none";
+
+
+            cutStatusText.textContent =
+                "✅ Download complete";
+
+
+            showMessage(
+                "Your selected video section has been downloaded.",
+                "success"
+            );
+
+
+        }
+        catch (error) {
+
+
+            cutSpinner.style.display =
+                "none";
+
+
+            cutStatusText.textContent =
+                "❌ Processing failed";
+
+
+            showMessage(
+                error.message,
+                "error"
+            );
+
+        }
+        finally {
+
+
+            stopCutTimer();
+
+
+            cutButton.disabled =
+                false;
+
+
+            cutButton.textContent =
+                "✂️ Cut & Download";
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// ENTER KEY
+// =====================================================
+
+youtubeUrl.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            fetchButton.click();
+
+        }
+
+    }
+);
+
+
+</script>
+
+
+</body>
+
+</html>
