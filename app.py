@@ -1,4 +1,6 @@
 import os
+os.environ["PATH"] += os.pathsep + os.path.abspath("./bin")
+import os
 import uuid
 import subprocess
 import yt_dlp
