@@ -1,24 +1,24 @@
 # youtube-cutter
 
-A web application designed to clip and process YouTube videos using a Python backend, custom HTML/CSS front end, and Docker support.
+A web application to cut and process YouTube video clips.
 
 ---
 
-## Features
+## Prerequisites
 
-- **Video Trimming:** Download and cut specific segments from YouTube videos.
-- **Web Interface:** Simple frontend built with HTML and custom CSS.
-- **Dockerized:** Containerized environment for quick deployment and execution.
+- **FFmpeg** is required locally to trim and process videos.
+
+### Installing FFmpeg
+
+- **macOS:** `brew install ffmpeg`
+- **Ubuntu/Debian:** `sudo apt install ffmpeg`
+- **Windows:** `choco install ffmpeg` (or download binaries from [ffmpeg.org](https://ffmpeg.org))
 
 ---
 
-## Repository Structure
+## Quick Start
 
-```text
-youtube-cutter/
-├── static/          # Static web assets (CSS files)
-├── templates/       # HTML template files (e.g., index.html)
-├── Dockerfile       # Container build configuration
-├── README.md        # Project documentation
-├── app.py           # Main application server script
-└── requirements.txt # Python package dependencies
+1. **Clone repository:**
+   ```bash
+   git clone [https://github.com/majidmahmoodlhr/youtube-cutter.git](https://github.com/majidmahmoodlhr/youtube-cutter.git)
+   cd youtube-cutter
