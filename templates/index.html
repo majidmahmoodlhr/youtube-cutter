@@ -1,1273 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>YouTube Video Cutter</title>
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Cutter - Cut YouTube Videos Instantly</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { backdrop-filter: blur(12px); background: rgba(255,255,255,0.8); }
+        .progress-bar { transition: width 0.3s ease; }
+        input:focus, select:focus { outline: none; ring: 2px; }
+    </style>
 </head>
-
-
-<body>
-
-
-<div class="container">
-
-
-    <header>
-
-        <h1>🎬 YouTube Video Cutter</h1>
-
-        <p>
-            Enter a YouTube URL and select
-            the part you want to download.
-        </p>
-
+<body class="bg-[#fcfcfc] min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-100 bg-white sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center text-white">
+                    <i class="fa-solid fa-scissors"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight">YouTube Cutter</span>
+                <span class="hidden md:inline text-xs bg-gray-900 text-white px-2.5 py-1 rounded-full ml-2">BETA</span>
+            </div>
+            <a href="https://github.com/majidmahmoodlhr/youtube-cutter" target="_blank" class="text-sm font-medium text-gray-600 hover:text-black flex items-center gap-2">
+                <i class="fa-brands fa-github text-lg"></i> GitHub
+            </a>
+        </div>
     </header>
 
+    <main class="max-w-6xl mx-auto px-6 py-10 md:py-16">
+        <div class="grid lg:grid-cols-2 gap-10 items-start">
+            
+            <!-- LEFT - Input Section -->
+            <div class="space-y-6">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
+                        Cut YouTube<br>
+                        videos in <span class="text-red-600">seconds.</span>
+                    </h1>
+                    <p class="text-gray-500 mt-4 text-[15px] leading-relaxed">
+                        No download needed. Paste link, select quality, choose time, get your clip. Fast, free, no watermark.
+                    </p>
+                </div>
 
-    <main class="card">
+                <!-- URL Input -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <label class="text-sm font-semibold text-gray-900 mb-2 block">YouTube URL</label>
+                    <div class="flex gap-2">
+                        <div class="flex-1 relative">
+                            <i class="fa-brands fa-youtube absolute left-4 top-1/2 -translate-y-1/2 text-red-500"></i>
+                            <input id="urlInput" type="text" placeholder="https://www.youtube.com/watch?v=..." 
+                                class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:bg-white focus:border-black transition">
+                        </div>
+                        <button id="fetchBtn" onclick="fetchVideo()" class="bg-black text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition flex items-center gap-2">
+                            <span id="fetchText">Fetch</span>
+                            <i id="fetchIcon" class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>We don't store your videos. Max 10 min cut for server safety.</span>
+                    </div>
+                </div>
 
+                <!-- Video Info Card -->
+                <div id="videoInfo" class="hidden bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="relative">
+                        <img id="videoThumb" src="" class="w-full h-48 object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute bottom-3 left-4 right-4">
+                            <h3 id="videoTitle" class="font-bold text-white text-[15px] leading-tight line-clamp-2"></h3>
+                            <p id="videoChannel" class="text-white/80 text-xs mt-1"></p>
+                        </div>
+                        <div id="videoDuration" class="absolute top-3 right-3 bg-black/80 text-white text-xs px-2.5 py-1 rounded-full font-medium"></div>
+                    </div>
 
-        <!-- =========================================
-             YOUTUBE URL
-        ========================================== -->
+                    <div class="p-5 space-y-5">
+                        <!-- Format -->
+                        <div>
+                            <label class="text-sm font-semibold mb-2 block">Select Quality</label>
+                            <select id="formatSelect" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium">
+                                <option>Loading formats...</option>
+                            </select>
+                            <p class="text-[11px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb mr-1"></i>MP4 + Audio recommended for best compatibility</p>
+                        </div>
 
-        <label for="youtubeUrl">
-            YouTube Video URL
-        </label>
+                        <!-- Time -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-semibold mb-2 block">Start Time</label>
+                                <input id="startTime" type="text" placeholder="00:00:05" value="00:00:00" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono font-medium focus:bg-white focus:border-black">
+                                <p class="text-[11px] text-gray-400 mt-1">HH:MM:SS or MM:SS</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold mb-2 block">End Time</label>
+                                <input id="endTime" type="text" placeholder="00:00:15" value="00:00:30" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono font-medium focus:bg-white focus:border-black">
+                                <p id="durationHint" class="text-[11px] text-gray-400 mt-1">Duration: 30s</p>
+                            </div>
+                        </div>
 
+                        <!-- Warning -->
+                        <div id="limitWarning" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2.5">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                            <p class="text-xs text-amber-800 leading-relaxed"><b>Limit exceeded:</b> Max 10 minutes allowed. Shorten your clip to protect server resources.</p>
+                        </div>
 
-        <div class="url-row">
+                        <!-- Progress -->
+                        <div id="progressWrap" class="hidden space-y-3">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-gray-600 flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Cutting video...</span>
+                                <span id="progressText" class="text-black">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                <div id="progressBar" class="progress-bar h-full bg-black rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-[11px] text-gray-500">This may take 10-30 seconds depending on quality</p>
+                        </div>
 
-            <input
-                type="url"
-                id="youtubeUrl"
-                placeholder="Paste YouTube URL here..."
-            >
+                        <button id="cutBtn" onclick="cutVideo()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-sm hover:bg-red-700 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-scissors"></i>
+                            Cut & Download
+                        </button>
+                    </div>
+                </div>
 
+                <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm flex gap-3">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                    <span id="errorText"></span>
+                </div>
+            </div>
 
-            <button
-                id="fetchButton"
-                class="fetch-button"
-            >
-                🔍 Fetch
-            </button>
+            <!-- RIGHT - Preview / How it works -->
+            <div class="space-y-6">
+                <!-- Success Card -->
+                <div id="successCard" class="hidden bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+                    <div class="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-check text-lg"></i>
+                    </div>
+                    <h3 class="font-bold text-green-900">Video Cut Successfully!</h3>
+                    <p class="text-sm text-green-700 mt-1">Your download should start automatically.</p>
+                </div>
 
+                <!-- How it works -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                    <h3 class="font-bold text-sm mb-4">How it works</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-3">
+                            <div class="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                            <div>
+                                <p class="text-sm font-semibold">Paste YouTube link</p>
+                                <p class="text-xs text-gray-500 mt-0.5">We fetch title, thumbnail and qualities</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                            <div>
+                                <p class="text-sm font-semibold">Select time range</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Format: HH:MM:SS, e.g. 00:01:10 to 00:02:00</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                            <div>
+                                <p class="text-sm font-semibold">Download clip</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Instant cutting with FFmpeg, no watermark</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="bg-gray-900 text-white rounded-2xl p-6">
+                    <h4 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-yellow-400"></i> Pro Tips</h4>
+                    <ul class="mt-3 space-y-2.5 text-xs text-gray-300 leading-relaxed">
+                        <li class="flex gap-2"><span>•</span> Use 720p for fastest cutting (1080p takes longer)</li>
+                        <li class="flex gap-2"><span>•</span> Max clip is 10 minutes — perfect for shorts/reels</li>
+                        <li class="flex gap-2"><span>•</span> Time is accurate to 1 second</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-
-
-        <!-- =========================================
-             FETCH STATUS
-        ========================================== -->
-
-        <div
-            id="statusBox"
-            class="status-box"
-            style="display:none;"
-        >
-
-            <div
-                id="spinner"
-                class="spinner"
-                style="display:none;"
-            ></div>
-
-
-            <div>
-
-                <strong id="statusText">
-                    Ready
-                </strong>
-
-
-                <div
-                    id="statusTime"
-                    class="status-time"
-                >
-                    00:00
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =========================================
-             VIDEO INFORMATION
-        ========================================== -->
-
-        <section
-            id="videoInfo"
-            class="video-info"
-        >
-
-
-            <div class="thumbnail-container">
-
-                <img
-                    id="thumbnail"
-                    alt="Video thumbnail"
-                >
-
-            </div>
-
-
-            <div class="info">
-
-
-                <div class="info-label">
-                    Video Title
-                </div>
-
-
-                <h2 id="videoTitle">
-                    -
-                </h2>
-
-
-                <div class="channel-name">
-
-                    <span>
-                        Channel
-                    </span>
-
-                    <strong id="channelName">
-                        -
-                    </strong>
-
-                </div>
-
-
-                <div class="duration-display">
-
-                    <span>
-                        Total Duration
-                    </span>
-
-                    <strong id="videoDuration">
-                        00:00:00
-                    </strong>
-
-                </div>
-
-
-            </div>
-
-        </section>
-
-
-        <!-- =========================================
-             FORMAT SELECTION
-        ========================================== -->
-
-        <section
-            id="formatSection"
-            class="format-section"
-            style="display:none;"
-        >
-
-            <h2>
-                🎥 Video Format
-            </h2>
-
-
-            <label for="formatSelect">
-                Select the format available for this video
-            </label>
-
-
-            <select
-                id="formatSelect"
-                class="format-select"
-            >
-
-                <option value="">
-                    Select a format
-                </option>
-
-            </select>
-
-
-            <p class="format-help">
-                Only formats actually available for this
-                YouTube video are shown.
-            </p>
-
-        </section>
-
-
-        <!-- =========================================
-             CUT SECTION
-        ========================================== -->
-
-        <section
-            id="cutSection"
-            class="cut-section"
-            style="display:none;"
-        >
-
-
-            <h2>
-                ✂️ Select Your Section
-            </h2>
-
-
-            <div class="time-grid">
-
-
-                <div class="time-box">
-
-                    <label for="startTime">
-                        Start Time
-                    </label>
-
-                    <input
-                        type="text"
-                        id="startTime"
-                        value="00:00:00"
-                        placeholder="HH:MM:SS"
-                    >
-
-                </div>
-
-
-                <div class="time-box">
-
-                    <label for="endTime">
-                        End Time
-                    </label>
-
-                    <input
-                        type="text"
-                        id="endTime"
-                        value="00:00:00"
-                        placeholder="HH:MM:SS"
-                    >
-
-                </div>
-
-
-            </div>
-
-
-            <p class="help-text">
-                Enter time in HH:MM:SS format.
-                Example: 00:05:30
-            </p>
-
-
-            <button
-                id="cutButton"
-                class="cut-button"
-            >
-                ✂️ Cut & Download
-            </button>
-
-
-            <!-- CUT STATUS -->
-
-            <div
-                id="cutStatus"
-                class="cut-status"
-                style="display:none;"
-            >
-
-                <div
-                    id="cutSpinner"
-                    class="spinner"
-                    style="display:none;"
-                ></div>
-
-
-                <strong id="cutStatusText">
-                    Preparing...
-                </strong>
-
-
-                <div
-                    id="cutElapsed"
-                    class="status-time"
-                >
-                    00:00
-                </div>
-
-            </div>
-
-
-        </section>
-
-
-        <!-- =========================================
-             MESSAGE
-        ========================================== -->
-
-        <div
-            id="message"
-            class="message"
-        ></div>
-
-
     </main>
 
-
-    <footer id="footer">
-
-        YouTube Video Cutter • Flask + FFmpeg
-
-    </footer>
-
-
-</div>
-
-
-
-<script>
-
-
-// =====================================================
-// ELEMENTS
-// =====================================================
-
-const youtubeUrl =
-    document.getElementById("youtubeUrl");
-
-const fetchButton =
-    document.getElementById("fetchButton");
-
-const statusBox =
-    document.getElementById("statusBox");
-
-const spinner =
-    document.getElementById("spinner");
-
-const statusText =
-    document.getElementById("statusText");
-
-const statusTime =
-    document.getElementById("statusTime");
-
-const videoInfo =
-    document.getElementById("videoInfo");
-
-const thumbnail =
-    document.getElementById("thumbnail");
-
-const videoTitle =
-    document.getElementById("videoTitle");
-
-const channelName =
-    document.getElementById("channelName");
-
-const videoDuration =
-    document.getElementById("videoDuration");
-
-const formatSection =
-    document.getElementById("formatSection");
-
-const formatSelect =
-    document.getElementById("formatSelect");
-
-const cutSection =
-    document.getElementById("cutSection");
-
-const startTime =
-    document.getElementById("startTime");
-
-const endTime =
-    document.getElementById("endTime");
-
-const cutButton =
-    document.getElementById("cutButton");
-
-const cutStatus =
-    document.getElementById("cutStatus");
-
-const cutSpinner =
-    document.getElementById("cutSpinner");
-
-const cutStatusText =
-    document.getElementById("cutStatusText");
-
-const cutElapsed =
-    document.getElementById("cutElapsed");
-
-const message =
-    document.getElementById("message");
-
-const footer =
-    document.getElementById("footer");
-
-
-let videoDurationSeconds = 0;
-
-let fetchTimer = null;
-
-let cutTimer = null;
-
-let fetchStartTime = 0;
-
-let cutStartTime = 0;
-
-
-// =====================================================
-// FORMAT TIME
-// =====================================================
-
-function formatTime(seconds) {
-
-    seconds =
-        Math.max(
-            0,
-            Math.floor(seconds)
-        );
-
-    const minutes =
-        Math.floor(seconds / 60);
-
-    const secs =
-        seconds % 60;
-
-    return (
-        String(minutes).padStart(2, "0")
-        + ":"
-        + String(secs).padStart(2, "0")
-    );
-}
-
-
-// =====================================================
-// TIME → SECONDS
-// =====================================================
-
-function timeToSeconds(value) {
-
-    const parts =
-        value.trim().split(":");
-
-
-    if (parts.length !== 3) {
-
-        return NaN;
-
-    }
-
-
-    const h =
-        Number(parts[0]);
-
-    const m =
-        Number(parts[1]);
-
-    const s =
-        Number(parts[2]);
-
-
-    if (
-        !Number.isFinite(h) ||
-        !Number.isFinite(m) ||
-        !Number.isFinite(s)
-    ) {
-
-        return NaN;
-
-    }
-
-
-    if (
-        h < 0 ||
-        m < 0 ||
-        m > 59 ||
-        s < 0 ||
-        s > 59
-    ) {
-
-        return NaN;
-
-    }
-
-
-    return (
-        h * 3600 +
-        m * 60 +
-        s
-    );
-}
-
-
-// =====================================================
-// MESSAGE
-// =====================================================
-
-function showMessage(
-    text,
-    type = ""
-) {
-
-    message.textContent =
-        text;
-
-    message.className =
-        "message " + type;
-}
-
-
-// =====================================================
-// FETCH TIMER
-// =====================================================
-
-function startFetchTimer() {
-
-    fetchStartTime =
-        Date.now();
-
-    clearInterval(
-        fetchTimer
-    );
-
-
-    fetchTimer =
-        setInterval(
-            function() {
-
-                const elapsed =
-                    (
-                        Date.now()
-                        -
-                        fetchStartTime
-                    ) / 1000;
-
-
-                statusTime.textContent =
-                    formatTime(
-                        elapsed
-                    );
-
-            },
-            250
-        );
-}
-
-
-function stopFetchTimer() {
-
-    clearInterval(
-        fetchTimer
-    );
-
-}
-
-
-// =====================================================
-// CUT TIMER
-// =====================================================
-
-function startCutTimer() {
-
-    cutStartTime =
-        Date.now();
-
-    clearInterval(
-        cutTimer
-    );
-
-
-    cutTimer =
-        setInterval(
-            function() {
-
-                const elapsed =
-                    (
-                        Date.now()
-                        -
-                        cutStartTime
-                    ) / 1000;
-
-
-                cutElapsed.textContent =
-                    formatTime(
-                        elapsed
-                    );
-
-            },
-            250
-        );
-}
-
-
-function stopCutTimer() {
-
-    clearInterval(
-        cutTimer
-    );
-
-}
-
-
-// =====================================================
-// DISPLAY AVAILABLE FORMATS
-// =====================================================
-
-function displayFormats(formats) {
-
-
-    formatSelect.innerHTML = "";
-
-
-    const defaultOption =
-        document.createElement(
-            "option"
-        );
-
-
-    defaultOption.value = "";
-
-    defaultOption.textContent =
-        "Select a format";
-
-
-    formatSelect.appendChild(
-        defaultOption
-    );
-
-
-    if (
-        !formats ||
-        formats.length === 0
-    ) {
-
-        const option =
-            document.createElement(
-                "option"
-            );
-
-        option.value = "";
-
-        option.textContent =
-            "No suitable video formats found";
-
-        formatSelect.appendChild(
-            option
-        );
-
-        return;
-    }
-
-
-    /*
-       Remove duplicate resolution +
-       extension combinations.
-    */
-
-    const seen =
-        new Set();
-
-
-    formats.forEach(
-        function(format) {
-
-
-            const key =
-                format.height
-                + "-"
-                + format.ext
-                + "-"
-                + format.has_audio;
-
-
-            if (seen.has(key)) {
-
+    <script>
+        let videoDurationSeconds = 0;
+        const MAX_DURATION = 600;
+
+        function showError(msg) {
+            const box = document.getElementById('errorBox');
+            document.getElementById('errorText').innerText = msg;
+            box.classList.remove('hidden');
+            setTimeout(() => box.classList.add('hidden'), 5000);
+        }
+
+        function parseTime(str) {
+            const parts = str.split(':').map(Number);
+            if (parts.length === 2) return parts[0]*60 + parts[1];
+            if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+            return NaN;
+        }
+
+        function updateDurationHint() {
+            const s = parseTime(document.getElementById('startTime').value);
+            const e = parseTime(document.getElementById('endTime').value);
+            const hint = document.getElementById('durationHint');
+            const warn = document.getElementById('limitWarning');
+            const cutBtn = document.getElementById('cutBtn');
+            
+            if (isNaN(s) || isNaN(e) || e <= s) {
+                hint.innerText = "Invalid time";
+                hint.className = "text-[11px] text-red-500 mt-1";
                 return;
-
             }
-
-
-            seen.add(key);
-
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                format.format_id;
-
-
-            let audioText =
-                format.has_audio
-                ? " + Audio"
-                : " + Audio will be added";
-
-
-            option.textContent =
-                format.height
-                + "p • "
-                + format.ext.toUpperCase()
-                + audioText;
-
-
-            formatSelect.appendChild(
-                option
-            );
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// FETCH
-// =====================================================
-
-fetchButton.addEventListener(
-    "click",
-    async function() {
-
-
-        const url =
-            youtubeUrl.value.trim();
-
-
-        if (!url) {
-
-            showMessage(
-                "Please enter a YouTube URL.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        videoInfo.style.display =
-            "none";
-
-
-        formatSection.style.display =
-            "none";
-
-
-        cutSection.style.display =
-            "none";
-
-
-        statusBox.style.display =
-            "flex";
-
-
-        spinner.style.display =
-            "block";
-
-
-        statusText.textContent =
-            "🔎 Connecting to YouTube...";
-
-
-        fetchButton.disabled =
-            true;
-
-
-        fetchButton.textContent =
-            "⏳ Fetching...";
-
-
-        showMessage("");
-
-
-        startFetchTimer();
-
-
-        try {
-
-
-            const response =
-                await fetch(
-                    "/fetch",
-                    {
-
-                        method: "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                url: url
-
-                            })
-
-                    }
-                );
-
-
-            const data =
-                await response.json();
-
-
-            if (
-                !response.ok ||
-                !data.success
-            ) {
-
-                throw new Error(
-                    data.message ||
-                    "Could not fetch video information."
-                );
-
+            const dur = e - s;
+            hint.innerText = `Duration: ${dur}s (${Math.floor(dur/60)}m ${dur%60}s)`;
+            hint.className = "text-[11px] text-gray-500 mt-1";
+            
+            if (dur > MAX_DURATION) {
+                warn.classList.remove('hidden');
+                cutBtn.disabled = true;
+                cutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                warn.classList.add('hidden');
+                cutBtn.disabled = false;
+                cutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-
-
-            // =========================================
-            // VIDEO INFORMATION
-            // =========================================
-
-            videoDurationSeconds =
-                Number(
-                    data.duration
-                );
-
-
-            videoTitle.textContent =
-                data.title ||
-                "Unknown Title";
-
-
-            channelName.textContent =
-                data.channel ||
-                "Unknown Channel";
-
-
-            videoDuration.textContent =
-                data.duration_text;
-
-
-            // =========================================
-            // THUMBNAIL
-            // =========================================
-
-            if (data.thumbnail) {
-
-                thumbnail.src =
-                    data.thumbnail;
-
-                thumbnail.style.display =
-                    "block";
-
-            }
-            else {
-
-                thumbnail.style.display =
-                    "none";
-
-            }
-
-
-            // =========================================
-            // TIME
-            // =========================================
-
-            startTime.value =
-                "00:00:00";
-
-
-            endTime.value =
-                data.duration_text;
-
-
-            // =========================================
-            // FORMATS
-            // =========================================
-
-            displayFormats(
-                data.formats
-            );
-
-
-            // =========================================
-            // SHOW EVERYTHING
-            // =========================================
-
-            videoInfo.style.display =
-                "grid";
-
-
-            formatSection.style.display =
-                "block";
-
-
-            cutSection.style.display =
-                "block";
-
-
-            spinner.style.display =
-                "none";
-
-
-            statusText.textContent =
-                "✅ Video information ready";
-
-
-            showMessage(
-                "Video information and available formats loaded.",
-                "success"
-            );
-
-
-        }
-        catch (error) {
-
-
-            spinner.style.display =
-                "none";
-
-
-            statusText.textContent =
-                "❌ Fetch failed";
-
-
-            showMessage(
-                error.message,
-                "error"
-            );
-
-        }
-        finally {
-
-
-            stopFetchTimer();
-
-
-            fetchButton.disabled =
-                false;
-
-
-            fetchButton.textContent =
-                "🔍 Fetch";
-
         }
 
-    }
-);
-
-
-// =====================================================
-// CUT & DOWNLOAD
-// =====================================================
-
-cutButton.addEventListener(
-    "click",
-    async function() {
-
-
-        const url =
-            youtubeUrl.value.trim();
-
-
-        const start =
-            timeToSeconds(
-                startTime.value
-            );
-
-
-        const end =
-            timeToSeconds(
-                endTime.value
-            );
-
-
-        const selectedFormat =
-            formatSelect.value;
-
-
-        // =============================================
-        // VALIDATION
-        // =============================================
-
-        if (!selectedFormat) {
-
-            showMessage(
-                "Please select a video format.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (
-            Number.isNaN(start) ||
-            Number.isNaN(end)
-        ) {
-
-            showMessage(
-                "Use HH:MM:SS format.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (end <= start) {
-
-            showMessage(
-                "End time must be greater than start time.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        if (
-            videoDurationSeconds &&
-            end > videoDurationSeconds
-        ) {
-
-            showMessage(
-                "End time cannot exceed the video duration.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        // =============================================
-        // START PROCESSING
-        // =============================================
-
-        cutButton.disabled =
-            true;
-
-
-        cutButton.textContent =
-            "⏳ Processing...";
-
-
-        cutStatus.style.display =
-            "block";
-
-
-        cutSpinner.style.display =
-            "block";
-
-
-        cutStatusText.textContent =
-            "🔗 Connecting to selected YouTube stream...";
-
-
-        startCutTimer();
-
-
-        try {
-
-
-            const response =
-                await fetch(
-                    "/cut",
-                    {
-
-                        method: "POST",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                url: url,
-
-                                start_time:
-                                    startTime.value,
-
-                                end_time:
-                                    endTime.value,
-
-                                format_id:
-                                    selectedFormat
-
-                            })
-
-                    }
-                );
-
-
-            if (!response.ok) {
-
-
-                let errorMessage =
-                    "Could not create the video.";
-
-
-                try {
-
-                    const data =
-                        await response.json();
-
-
-                    errorMessage =
-                        data.message ||
-                        errorMessage;
-
+        document.getElementById('startTime').addEventListener('input', updateDurationHint);
+        document.getElementById('endTime').addEventListener('input', updateDurationHint);
+
+        async function fetchVideo() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) { showError("Please enter a YouTube URL"); return; }
+
+            const btn = document.getElementById('fetchBtn');
+            const txt = document.getElementById('fetchText');
+            const icon = document.getElementById('fetchIcon');
+            
+            txt.innerText = "Fetching...";
+            icon.className = "fa-solid fa-spinner fa-spin";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/fetch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url})
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+
+                videoDurationSeconds = data.duration;
+                document.getElementById('videoThumb').src = data.thumbnail;
+                document.getElementById('videoTitle').innerText = data.title;
+                document.getElementById('videoChannel').innerText = data.channel + " • " + data.duration_text;
+                document.getElementById('videoDuration').innerText = data.duration_text;
+
+                const select = document.getElementById('formatSelect');
+                select.innerHTML = "";
+                // sort: mp4 first, has audio first
+                data.formats.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.format_id;
+                    opt.innerText = f.label;
+                    if (f.height === 720 && f.ext === 'mp4' && f.has_audio) opt.selected = true;
+                    select.appendChild(opt);
+                });
+                if (data.formats.length === 0) {
+                    select.innerHTML = "<option>No video formats found</option>";
                 }
-                catch (e) {}
 
+                document.getElementById('videoInfo').classList.remove('hidden');
+                document.getElementById('videoInfo').scrollIntoView({behavior: 'smooth'});
+                
+                // auto set end time to 30s or video duration
+                const end = Math.min(30, data.duration || 30);
+                document.getElementById('endTime').value = new Date(end*1000).toISOString().substr(11,8);
+                updateDurationHint();
 
-                throw new Error(
-                    errorMessage
-                );
+            } catch (e) {
+                showError(e.message || "Failed to fetch video");
+            } finally {
+                txt.innerText = "Fetch";
+                icon.className = "fa-solid fa-arrow-right";
+                btn.disabled = false;
+            }
+        }
 
+        async function cutVideo() {
+            const url = document.getElementById('urlInput').value.trim();
+            const format_id = document.getElementById('formatSelect').value;
+            const start_time = document.getElementById('startTime').value.trim();
+            const end_time = document.getElementById('endTime').value.trim();
+
+            if (!url || !format_id || !start_time || !end_time) {
+                showError("All fields are required");
+                return;
             }
 
+            const dur = parseTime(end_time) - parseTime(start_time);
+            if (dur > MAX_DURATION) { showError(`Max ${MAX_DURATION/60} minutes allowed`); return; }
 
-            cutStatusText.textContent =
-                "📦 Preparing your download...";
+            const progressWrap = document.getElementById('progressWrap');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const cutBtn = document.getElementById('cutBtn');
+            
+            progressWrap.classList.remove('hidden');
+            cutBtn.disabled = true;
+            cutBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cutting...';
+            document.getElementById('successCard').classList.add('hidden');
 
+            // fake progress animation
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress = Math.min(progress + Math.random()*8, 90);
+                progressBar.style.width = progress + "%";
+                progressText.innerText = Math.floor(progress) + "%";
+            }, 400);
 
-            const blob =
-                await response.blob();
+            try {
+                const res = await fetch('/cut', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url, start_time, end_time, format_id})
+                });
 
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.message || "Cut failed");
+                }
 
-            const downloadUrl =
-                URL.createObjectURL(
-                    blob
-                );
+                const blob = await res.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `cut-${Date.now()}.mp4`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
 
+                clearInterval(interval);
+                progressBar.style.width = "100%";
+                progressText.innerText = "100%";
+                
+                setTimeout(() => {
+                    progressWrap.classList.add('hidden');
+                    document.getElementById('successCard').classList.remove('hidden');
+                    cutBtn.disabled = false;
+                    cutBtn.innerHTML = '<i class="fa-solid fa-scissors"></i> Cut & Download';
+                    progressBar.style.width = "0%";
+                }, 500);
 
-            const link =
-                document.createElement(
-                    "a"
-                );
-
-
-            link.href =
-                downloadUrl;
-
-
-            link.download =
-                "cut-video.mp4";
-
-
-            document.body.appendChild(
-                link
-            );
-
-
-            link.click();
-
-
-            link.remove();
-
-
-            URL.revokeObjectURL(
-                downloadUrl
-            );
-
-
-            cutSpinner.style.display =
-                "none";
-
-
-            cutStatusText.textContent =
-                "✅ Download complete";
-
-
-            showMessage(
-                "Your selected video section has been downloaded.",
-                "success"
-            );
-
-
+            } catch (e) {
+                clearInterval(interval);
+                progressWrap.classList.add('hidden');
+                cutBtn.disabled = false;
+                cutBtn.innerHTML = '<i class="fa-solid fa-scissors"></i> Cut & Download';
+                showError(e.message || "Failed to cut video. Try lower quality.");
+            }
         }
-        catch (error) {
-
-
-            cutSpinner.style.display =
-                "none";
-
-
-            cutStatusText.textContent =
-                "❌ Processing failed";
-
-
-            showMessage(
-                error.message,
-                "error"
-            );
-
-        }
-        finally {
-
-
-            stopCutTimer();
-
-
-            cutButton.disabled =
-                false;
-
-
-            cutButton.textContent =
-                "✂️ Cut & Download";
-
-        }
-
-    }
-);
-
-
-// =====================================================
-// ENTER KEY
-// =====================================================
-
-youtubeUrl.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (
-            event.key === "Enter"
-        ) {
-
-            fetchButton.click();
-
-        }
-
-    }
-);
-
-
-</script>
-
-
+    </script>
 </body>
-
 </html>
