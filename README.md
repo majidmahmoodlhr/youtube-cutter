@@ -11,7 +11,7 @@ A fast, modern web app to download **only the clip you need** from any YouTube v
 
 **Live Demo:** `http://localhost:5000` after running
 
-![YouTube Cutter Screenshot](https://via.placeholder.com/800x450.png?text=Add+Your+Screenshot+Here)
+![YouTube Cutter Screenshot](https://github.com/majidmahmoodlhr/youtube-cutter/blob/main/Screenshot%202026-09-02%20091047.jpg?raw=true)
 
 ---
 
